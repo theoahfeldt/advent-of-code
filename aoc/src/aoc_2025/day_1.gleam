@@ -1,3 +1,4 @@
+import gleam/int
 import gleam/option.{None, Some}
 import nibble.{do, return}
 import nibble/lexer
@@ -53,10 +54,42 @@ pub fn parse(input: String) -> List(Int) {
   rotations
 }
 
+fn count_zeros(num_zeros: Int, dial_position: Int, rotations: List(Int)) -> Int {
+  case rotations {
+    [] -> num_zeros
+    [first, ..rest] -> {
+      let dial_position = {dial_position + first} % 100
+      let num_zeros = case dial_position {
+        0 -> num_zeros + 1
+        _ -> num_zeros
+      }
+      count_zeros(num_zeros, dial_position, rest)
+    }
+  }
+}
+
+fn count_clicks(num_clicks: Int, dial_position: Int, rotations: List(Int)) -> Int {
+  let num_numbers = 100
+  case rotations {
+    [] -> num_clicks
+    [first, ..rest] -> {
+      let new_position = dial_position + first
+      let assert Ok(whole_rotations) = int.divide(dial_position + first, num_numbers)
+      let new_clicks = case new_position > 0 {
+        True -> whole_rotations
+        False if dial_position == 0 -> -whole_rotations
+        False -> 1 - whole_rotations
+      }
+      let assert Ok(dial_position) = int.modulo(new_position, num_numbers)
+      count_clicks(num_clicks + new_clicks, dial_position, rest)
+    }
+  }
+}
+
 pub fn pt_1(input: List(Int)) {
-  todo as "part 1 not implemented"
+  count_zeros(0, 50, input)
 }
 
 pub fn pt_2(input: List(Int)) {
-  todo as "part 2 not implemented"
+  count_clicks(0, 50, input)
 }
