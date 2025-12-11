@@ -24,15 +24,41 @@ fn max_joltage(batteries: List(Int)) -> #(Int, Int) {
   }
 }
 
+fn add_battery(new_battery: Int, batteries: List(Int)) -> List(Int) {
+  case batteries {
+    [first, ..rest] -> case int.compare(new_battery, first) {
+      order.Gt | order.Eq -> [new_battery, ..add_battery(first, rest)]
+      order.Lt -> batteries
+    }
+    [] -> []
+  }
+}
+
+fn max_joltage_2(num_batteries: Int, batteries: List(Int)) -> List(Int) {
+  case list.length(batteries) <= num_batteries {
+    True -> batteries
+    False -> {
+      let assert [first, ..rest] = batteries
+      add_battery(first, max_joltage_2(num_batteries, rest))
+    }
+  }
+}
+
 pub fn pt_1(input: List(List(Int))) {
   let max_joltages = {
     use batteries <- list.map(input)
     let #(a, b) = max_joltage(batteries)
     10 * a + b
   }
-  list.fold(max_joltages, 0, int.add)
+  int.sum(max_joltages)
 }
 
 pub fn pt_2(input: List(List(Int))) {
-  todo as "part 2 not implemented"
+  let max_joltages = {
+    use batteries <- list.map(input)
+    let digits = list.map(max_joltage_2(12, batteries), int.to_string)
+    let assert Ok(x) = int.parse(string.concat(digits))
+    x
+  }
+  int.sum(max_joltages)
 }
