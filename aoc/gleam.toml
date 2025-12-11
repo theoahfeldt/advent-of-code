@@ -19,3 +19,7 @@ nibble = ">= 1.1.4 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
+
+[gladvent.2024]
+1 = { pt_1 = 1089, pt_2 = 6530 }
+2 = { pt_1 = 19128774598, pt_2 = 21932258645}
