@@ -2,6 +2,7 @@ import gleam/float
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
+import gleam/order
 import gleam/string
 import nibble.{do, return}
 import nibble/lexer
@@ -55,6 +56,12 @@ fn duplicate_digits(num: Int) -> Int {
   duplicated
 }
 
+fn repeat_digits(num: Int, repetitions: Int) -> Int {
+  let as_string = int.to_string(num)
+  let assert Ok(duplicated) = int.parse(string.repeat(as_string, repetitions))
+  duplicated
+}
+
 fn power_of_ten(n: Int) -> Int {
   let assert Ok(x) = int.power(10, int.to_float(n))
   float.round(x)
@@ -82,13 +89,16 @@ fn invalid_ids_with_num_repeating_digits(
   )
 }
 
+fn int_divide_up(dividend: Int, divisor: Int) -> Int {
+  float.round(float.ceiling(int.to_float(dividend) /. int.to_float(divisor)))
+}
+
 fn invalid_ids_in_range(range: Range) -> List(Int) {
   let range_start_string = int.to_string(range.start)
   let range_end_string = int.to_string(range.end)
   let num_digits_start = string.length(range_start_string)
   let num_digits_end = string.length(range_end_string)
-  let min_num_repeating_digits =
-    float.round(float.ceiling(int.to_float(num_digits_start) /. 2.0))
+  let min_num_repeating_digits = int_divide_up(num_digits_start, 2)
   let max_num_repeating_digits = num_digits_end / 2
   let possible_num_repeating_digits =
     increasing_range(min_num_repeating_digits, max_num_repeating_digits)
@@ -133,11 +143,103 @@ fn invalid_ids_in_range(range: Range) -> List(Int) {
   })
 }
 
+fn invalid_ids_with_num_repeating_digits_num_repetitions(
+  range: Range,
+  num_repeating_digits: Int,
+  num_repetitions: Int,
+) -> List(Int) {
+  let range_start_string = int.to_string(range.start)
+  let range_end_string = int.to_string(range.end)
+  let num_digits_start = string.length(range_start_string)
+  let num_digits_end = string.length(range_end_string)
+
+  let min_repeating_digits = case
+    num_digits_start == num_repeating_digits * num_repetitions
+  {
+    True -> {
+      let first_n = string.slice(range_start_string, 0, num_repeating_digits)
+      let assert Ok(first_n_int) = int.parse(first_n)
+      case
+        string.compare(
+          string.repeat(first_n, num_repetitions),
+          range_start_string,
+        )
+      {
+        order.Gt | order.Eq -> first_n_int
+        order.Lt -> first_n_int + 1
+      }
+    }
+    False -> power_of_ten(num_repeating_digits - 1)
+  }
+
+  let max_repeating_digits = case
+    num_digits_end == num_repeating_digits * num_repetitions
+  {
+    True -> {
+      let first_n = string.slice(range_end_string, 0, num_repeating_digits)
+      let assert Ok(first_n_int) = int.parse(first_n)
+      case
+        string.compare(
+          string.repeat(first_n, num_repetitions),
+          range_end_string,
+        )
+      {
+        order.Lt | order.Eq -> first_n_int
+        order.Gt -> first_n_int - 1
+      }
+    }
+    False -> power_of_ten(num_repeating_digits) - 1
+  }
+
+  use invalid_digits <- list.map(increasing_range(
+    min_repeating_digits,
+    max_repeating_digits,
+  ))
+  let digits = repeat_digits(invalid_digits, num_repetitions)
+  digits
+}
+
+fn invalid_ids_with_num_repeating_digits_2(
+  range: Range,
+  num_repeating_digits: Int,
+) -> List(Int) {
+  let min_num_repetitions =
+    int_divide_up(
+      string.length(int.to_string(range.start)),
+      num_repeating_digits,
+    )
+  let min_num_repetitions = int.max(min_num_repetitions, 2)
+  let max_num_repetitions =
+    string.length(int.to_string(range.end)) / num_repeating_digits
+  let possible_num_repetitions =
+    increasing_range(min_num_repetitions, max_num_repetitions)
+  use repetitions <- list.flat_map(possible_num_repetitions)
+  invalid_ids_with_num_repeating_digits_num_repetitions(
+    range,
+    num_repeating_digits,
+    repetitions,
+  )
+}
+
+fn invalid_ids_in_range_2(range: Range) -> List(Int) {
+  let range_end_string = int.to_string(range.end)
+  let num_digits_end = string.length(range_end_string)
+  let max_num_repeating_digits = num_digits_end / 2
+  let possible_num_repeating_digits =
+    increasing_range(1, max_num_repeating_digits)
+  let result =
+    list.flat_map(possible_num_repeating_digits, fn(x) {
+      invalid_ids_with_num_repeating_digits_2(range, x)
+    })
+  list.unique(result)
+}
+
 pub fn pt_1(input: List(Range)) {
   let invalid_ids = list.flat_map(input, invalid_ids_in_range)
   list.fold(invalid_ids, 0, int.add)
 }
 
 pub fn pt_2(input: List(Range)) {
-  todo
+  let invalid_ids = list.flat_map(input, invalid_ids_in_range_2)
+  list.fold(invalid_ids, 0, int.add)
 }
