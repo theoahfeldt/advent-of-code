@@ -107,6 +107,38 @@ pub fn pt_1(input: List(Point)) {
   |> int.product
 }
 
+fn last_connection_to_form_one_circuit(
+  num_boxes: Int,
+  connections: List(#(Point, Point)),
+  circuits: List(Set(Point)),
+) -> Result(#(Point, Point), Nil) {
+  case connections {
+    [connection, ..rest] -> {
+      let connection_as_set = set.from_list([connection.0, connection.1])
+      let new_circuits = add_connection_to_circuits(connection_as_set, circuits)
+      case new_circuits {
+        [circuit] -> {
+          case set.size(circuit) == num_boxes {
+            True -> Ok(connection)
+            False ->
+              last_connection_to_form_one_circuit(num_boxes, rest, new_circuits)
+          }
+        }
+        _ -> last_connection_to_form_one_circuit(num_boxes, rest, new_circuits)
+      }
+    }
+    [] -> Error(Nil)
+  }
+}
+
 pub fn pt_2(input: List(Point)) {
-  todo as "part 2 not implemented"
+  let num_boxes = list.length(input)
+  let pairs = list.combination_pairs(input)
+  let sorted_pairs =
+    list.sort(pairs, fn(p1, p2) {
+      int.compare(distance_squared(p1.0, p1.1), distance_squared(p2.0, p2.1))
+    })
+  let assert Ok(#(p1, p2)) =
+    last_connection_to_form_one_circuit(num_boxes, sorted_pairs, [])
+  p1.x * p2.x
 }
