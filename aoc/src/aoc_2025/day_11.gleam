@@ -88,6 +88,37 @@ pub fn pt_1(input: Dict(String, List(Output))) {
   num_paths_to_out(Device("you"), input)
 }
 
+fn num_paths_to_out_passing_by_dac_and_fft(
+  devices: Dict(String, List(Output)),
+  passed_dac: Bool,
+  passed_fft: Bool,
+  from: Output,
+) -> Result(Int, Nil) {
+  case from {
+    Device(label) -> {
+      let passed_dac = passed_dac || label == "dac"
+      let passed_fft = passed_fft || label == "fft"
+      use outputs <- result.try(dict.get(devices, label))
+      use num_paths <- result.map(
+        outputs
+        |> list.map(num_paths_to_out_passing_by_dac_and_fft(
+          devices,
+          passed_dac,
+          passed_fft,
+          _,
+        ))
+        |> result.all,
+      )
+      int.sum(num_paths)
+    }
+    Out ->
+      Ok(case passed_dac && passed_fft {
+        True -> 1
+        False -> 0
+      })
+  }
+}
+
 pub fn pt_2(input: Dict(String, List(Output))) {
-  todo as "part 2 not implemented"
+  num_paths_to_out_passing_by_dac_and_fft(input, False, False, Device("svr"))
 }
