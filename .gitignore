@@ -1,3 +1,4 @@
 .direnv/
 env.sh
 aoc/build/
+aoc/input/
