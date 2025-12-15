@@ -41,11 +41,11 @@ pub fn right_turn(p1: Point, p2: Point, p3: Point) -> Bool {
 fn point_inside(point: Point, corner1: Point, corner2: Point) -> Bool {
   {
     { corner1.x < point.x && point.x < corner2.x }
-    || { corner2.x < point.x && point.x < corner2.x }
+    || { corner2.x < point.x && point.x < corner1.x }
   }
   && {
     { corner1.y < point.y && point.y < corner2.y }
-    || { corner2.y < point.y && point.y < corner2.y }
+    || { corner2.y < point.y && point.y < corner1.y }
   }
 }
 
