@@ -88,37 +88,32 @@ pub fn pt_1(input: Dict(String, List(Output))) {
   num_paths_to_out(Device("you"), input)
 }
 
-fn num_paths_to_out_passing_by_dac_and_fft(
+fn num_paths(
   devices: Dict(String, List(Output)),
-  passed_dac: Bool,
-  passed_fft: Bool,
   from: Output,
+  to: Output,
 ) -> Result(Int, Nil) {
-  case from {
-    Device(label) -> {
-      let passed_dac = passed_dac || label == "dac"
-      let passed_fft = passed_fft || label == "fft"
+  case from, to {
+    Device(label1), Device(label2) if label1 == label2 -> Ok(1)
+    Device(label), _ -> {
       use outputs <- result.try(dict.get(devices, label))
       use num_paths <- result.map(
         outputs
-        |> list.map(num_paths_to_out_passing_by_dac_and_fft(
-          devices,
-          passed_dac,
-          passed_fft,
-          _,
-        ))
+        |> list.map(num_paths(devices, _, to))
         |> result.all,
       )
       int.sum(num_paths)
     }
-    Out ->
-      Ok(case passed_dac && passed_fft {
-        True -> 1
-        False -> 0
-      })
+    Out, Out -> Ok(1)
+    Out, _ -> Ok(0)
   }
 }
 
-pub fn pt_2(input: Dict(String, List(Output))) {
-  num_paths_to_out_passing_by_dac_and_fft(input, False, False, Device("svr"))
+pub fn pt_2(devices: Dict(String, List(Output))) {
+  let svr_to_fft = num_paths(devices, Device("svr"), Device("fft")) |> echo
+  let svr_to_dac = num_paths(devices, Device("svr"), Device("dac")) |> echo
+  let fft_to_dac = num_paths(devices, Device("fft"), Device("dac")) |> echo
+  let dac_to_fft = num_paths(devices, Device("dac"), Device("fft")) |> echo
+  let fft_to_out = num_paths(devices, Device("fft"), Device("out")) |> echo
+  let dac_to_out = num_paths(devices, Device("dac"), Device("out")) |> echo
 }
